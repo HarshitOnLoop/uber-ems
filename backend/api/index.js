@@ -1,9 +1,9 @@
 require("dotenv").config();
-
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const multer = require("multer");
+const path = require("path"); // 1. IMPORT PATH MODULE
 const User = require("../User");
 const { Department, PerformanceReview, Payroll, Announcement, Goal, Document } = require("../Models");
 const routes = require("../routes");
@@ -17,6 +17,8 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// API Routes
 app.use("/", routes);
 
 const storage = multer.memoryStorage();
@@ -25,6 +27,8 @@ const upload = multer({ storage: storage });
 app.get("/", (req, res) => {
   res.json({ message: "✅ Server is running", status: "active" });
 });
+
+// --- AUTH ROUTES ---
 
 app.post("/signup", upload.single("image"), async (req, res) => {
   try {
@@ -102,6 +106,8 @@ app.post("/login", async (req, res) => {
   }
 });
 
+// --- USER ROUTES ---
+
 app.get("/users", async (req, res) => {
   try {
     const users = await User.find().select("-password -image");
@@ -172,6 +178,17 @@ app.put("/users/:id", upload.single("image"), async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
+app.delete("/users/:id", async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ message: "User deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- ATTENDANCE & LEAVE ROUTES ---
 
 app.post("/attendance", async (req, res) => {
   try {
@@ -265,13 +282,22 @@ app.post("/leave/respond", async (req, res) => {
   }
 });
 
-app.delete("/users/:id", async (req, res) => {
-  try {
-    await User.findByIdAndDelete(req.params.id);
-    res.json({ message: "User deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+// ==========================================
+// 2. SERVE STATIC FILES (THE 404 FIX)
+// ==========================================
+
+// NOTE: Replace '../client/dist' with your actual build folder path.
+// Common paths: 
+// - Vite: "../client/dist"
+// - Create-React-App: "../client/build"
+const buildPath = path.join(__dirname, "../client/dist"); 
+
+app.use(express.static(buildPath));
+
+// This wildcard route ensures that if a user reloads "/employee-dashboard",
+// Express sends the React/Frontend app instead of a 404 error.
+app.get("*", (req, res) => {
+  res.sendFile(path.join(buildPath, "index.html"));
 });
 
 module.exports = app;
