@@ -3,27 +3,31 @@ const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const multer = require("multer");
-const path = require("path"); // 1. IMPORT PATH MODULE
+const path = require("path");
 const User = require("../User");
-const { Department, PerformanceReview, Payroll, Announcement, Goal, Document } = require("../Models");
 const routes = require("../routes");
-
 const connectDB = require("../lib/db");
+
+// Initialize App
+const app = express();
+
+// Connect to Database
 connectDB()
   .then(() => console.log("🚀 Connected to MongoDB Atlas"))
   .catch((err) => console.error("❌ DB Error:", err));
 
-const app = express();
-
+// Middleware
 app.use(cors());
 app.use(express.json());
 
 // API Routes
 app.use("/", routes);
 
+// Multer Setup
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
+// Root Route (API Check)
 app.get("/", (req, res) => {
   res.json({ message: "✅ Server is running", status: "active" });
 });
@@ -286,18 +290,20 @@ app.post("/leave/respond", async (req, res) => {
 // 2. SERVE STATIC FILES (THE 404 FIX)
 // ==========================================
 
-// NOTE: Replace '../client/dist' with your actual build folder path.
-// Common paths: 
-// - Vite: "../client/dist"
-// - Create-React-App: "../client/build"
+// Change "client/dist" to "client/build" if using React Create-React-App
 const buildPath = path.join(__dirname, "../client/dist"); 
 
 app.use(express.static(buildPath));
 
-// This wildcard route ensures that if a user reloads "/employee-dashboard",
-// Express sends the React/Frontend app instead of a 404 error.
 app.get("*", (req, res) => {
   res.sendFile(path.join(buildPath, "index.html"));
 });
 
-module.exports = app;
+// ==========================================
+// 3. START SERVER (FIXED SECTION)
+// ==========================================
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    // Note: Use backticks (`) for template literals
+    console.log(`✅ Server running on port ${PORT}`);
+});
