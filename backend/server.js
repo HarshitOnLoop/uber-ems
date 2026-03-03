@@ -1,11 +1,14 @@
 require("dotenv").config();
 const path = require('path');
-// when running locally we start the same express app
 const app = require("./api");
 
 const PORT = process.env.PORT || 5001;
+
+// Static files middleware
+app.use(express.static(path.join(__dirname, "public")));
+
+// API routes
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
-app.get("*", (req, res) => {
-  
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
+
+// Catch-all route to serve frontend
+app.get("*", (req, res) =>
