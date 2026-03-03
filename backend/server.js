@@ -1,14 +1,19 @@
 require("dotenv").config();
-const path = require('path');
-const app = require("./api");
+const path = require("path");
+const express = require("express");
 
-const PORT = process.env.PORT || 5001;
+const app = require("./api"); // your main api file
 
-// Static files middleware
+const PORT = process.env.PORT || 10000; // Render uses 10000
+
+// Serve frontend build folder (IMPORTANT: change if folder name different)
 app.use(express.static(path.join(__dirname, "public")));
 
-// API routes
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+// Catch-all route (ONLY for frontend routes, NOT API)
+app.get("/*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
-// Catch-all route to serve frontend
-app.get("*", (req, res) =>
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
+});
