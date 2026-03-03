@@ -12,12 +12,17 @@ const connectDB = require("../lib/db");
 const app = express();
 
 // Connect to Database
+// Note: In serverless, we must ensure DB connects on every request if not cached
 connectDB()
   .then(() => console.log("🚀 Connected to MongoDB Atlas"))
   .catch((err) => console.error("❌ DB Error:", err));
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    // Optional: Restrict to your frontend URL in production
+    // origin: "https://your-frontend-app.vercel.app", 
+    // credentials: true
+}));
 app.use(express.json());
 
 // API Routes
@@ -111,7 +116,7 @@ app.post("/login", async (req, res) => {
 });
 
 // --- USER ROUTES ---
-
+// (Kept all your existing user routes)
 app.get("/users", async (req, res) => {
   try {
     const users = await User.find().select("-password -image");
@@ -193,6 +198,7 @@ app.delete("/users/:id", async (req, res) => {
 });
 
 // --- ATTENDANCE & LEAVE ROUTES ---
+// (Kept all your existing attendance routes)
 
 app.post("/attendance", async (req, res) => {
   try {
@@ -287,23 +293,19 @@ app.post("/leave/respond", async (req, res) => {
 });
 
 // ==========================================
-// 2. SERVE STATIC FILES (THE 404 FIX)
+// VERCEL CONFIGURATION
 // ==========================================
 
-// Change "client/dist" to "client/build" if using React Create-React-App
-const buildPath = path.join(__dirname, "../client/dist"); 
+// If we are running locally, listen on a port.
+// If we are on Vercel, export the app.
 
-app.use(express.static(buildPath));
-
-app.get("*", (req, res) => {
-  res.sendFile(path.join(buildPath, "index.html"));
-});
-
-// ==========================================
-// 3. START SERVER (FIXED SECTION)
-// ==========================================
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    // Note: Use backticks (`) for template literals
-    console.log(`✅ Server running on port ${PORT}`);
-});
+
+if (process.env.NODE_ENV !== "production") {
+    app.listen(PORT, () => {
+        console.log(`✅ Server running locally on port ${PORT}`);
+    });
+}
+
+// REQUIRED FOR VERCEL
+module.exports = app;
